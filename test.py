@@ -1,25 +1,34 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
+from matplotlib.collections import LineCollection
 import scipy.integrate as ode
 
+import math
+
 from vivelesmaths import *
+
+from multiprocessing import Process
 
 import csv
 import os
 
 import time
 
+plt.style.use('dark_background')
+
 Pr = 1
+
 
 def dF(_, F):
     return np.array([
         F[1],
         F[2],
-        2 * F[1]**2 - 3 * F[0] * F[2] - F[3],
+        2 * F[1] ** 2 - 3 * F[0] * F[2] - F[3],
         F[4],
         - 3 * Pr * F[0] * F[4]
     ])
+
 
 def rk4(dF, x_0, a, h):
     imax = int((x_0[1] - x_0[0]) / h)
@@ -33,6 +42,7 @@ def rk4(dF, x_0, a, h):
         K4 = dF((i + 1) * h, U[i, :] + K3 * h)
         U[i + 1, :] = U[i, :] + h * (K1 + 2 * K2 + 2 * K3 + K4) / 6
     return X, U
+
 
 def find_da(J, alpha):
     """
@@ -54,8 +64,7 @@ def find_da(J, alpha):
     return Gauss(-J, alpha)
 
 
-
-#ode.solve_ivp(dF, (0, 5), Y, max_step=1/500)
+# ode.solve_ivp(dF, (0, 5), Y, max_step=1/500)
 """
 def step(a):
     da = 0.1
@@ -108,13 +117,9 @@ solver(Pr=0.1, error=0.01)
 def step(a, it):
     d = 1e-7
 
-    F = np.array([0, 0, a[0], 1, a[1]])
-    F_a0 = np.array([0, 0, a[0] + d, 1, a[1]])
-    F_a1 = np.array([0, 0, a[0], 1, a[1] + d])
-
-    X, Y = rk4(dF, (0, 15 + it/(Pr * 10)), a, h)
-    _, Y_a0 = rk4(dF, (0, 15 + it/(Pr * 10)), [a[0] + d, a[1]], h)
-    __, Y_a1 = rk4(dF, (0, 15 + it/(Pr * 10)), [a[0], a[1] + d], h)
+    X, Y = rk4(dF, (0, 15 + it / (Pr * 10)), a, h)
+    _, Y_a0 = rk4(dF, (0, 15 + it / (Pr * 10)), [a[0] + d, a[1]], h)
+    __, Y_a1 = rk4(dF, (0, 15 + it / (Pr * 10)), [a[0], a[1] + d], h)
 
     alpha = np.array([Y[-1][1], Y[-1][3]])
     alpha_a0 = [Y_a0[-1][1], Y_a0[-1][3]]
@@ -127,14 +132,15 @@ def step(a, it):
     da = find_da(J, alpha)
     return a + da
 
+
 error = 1e-7
 h = 0.003
 
+
 def solver(error=1, N_max=50):
-    start = time.process_time()
-    #a = [2, -0.6520393]
-    #a = [1, -1]
-    a = [(0.295272089 - 0.25169215466) / (50**-0.17 - 100**-0.17) * (Pr ** -0.17 - 100**-0.17) + 0.2516921546, - 2.1913686 * (Pr/100) ** 0.27]
+    # a = [2, -0.6520393]
+    # a = [1, -1]
+    a = [(0.295272089 - 0.25169215466) / (50 ** -0.17 - 100 ** -0.17) * (Pr ** -0.17 - 100 ** -0.17) + 0.2516921546, - 2.1913686 * (Pr / 100) ** 0.27]
     a_new = step(a, 0)
     it = 0
     while (abs(a[0] - a_new[0]) > error or abs(a[1] - a_new[1]) > error) and it <= N_max:
@@ -146,12 +152,12 @@ def solver(error=1, N_max=50):
         print(a_new)
     else:
         print("bah c'est baisé...")
-    print(time.process_time() - start)
-    X, Y = rk4(dF, (0, 50), a_new, h)
-    plt.plot(X, Y[:, 1], "b", X, Y[:, 3], "r")
-    plt.show()
-    plt.plot(X, Y)
+    # X, Y = rk4(dF, (0, 100), a_new, h)
+    # plt.plot(X, Y[:, 1], "b", X, Y[:, 3], "r")
+    # plt.show()
+    # plt.plot(X, Y)
     return a_new
+
 
 """
 P = [(i+1)*1e-2 for i in range(10)] + [(i+1)*1e-1 for i in range(10)] + [(i+1) for i in range(10)] + [(i+1)*1e1 for i in range(10)]
@@ -159,9 +165,10 @@ A = []
 for i in range(len(P)):
     Pr = P[i]
     A.append(solver(error=1e-7))
+    print("{:.2f}%".format((1+i)/len(P)*100))
 
 # Ecriture des donnée dans un fichier
-with open("Pr_data.csv", 'a') as file:
+with open("Pr_data_better.csv", 'a', newline='') as file:
     if os.stat("Pr_data.csv").st_size == 0:
         writer = csv.writer(file)
         writer.writerow(["Pr", "a_0", "a_1"])
@@ -170,4 +177,94 @@ with open("Pr_data.csv", 'a') as file:
 """
 
 
-solver(error=1e-7)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+
+X, Y = rk4(dF, (0, 50), solver(error=1e-7), h)
+
+V = []
+for i, y_i in enumerate(Y):
+    if 0.9 <= abs(2 * y_i[1]**2 - 3 * y_i[0] * y_i[2]) / y_i[2] <= 1.1:
+        V.append(X[i])
+plt.vlines([V[0], V[-1]], -0.3, 1.3)
+print(V)
+
+points_T = np.array([X, Y[:, 3]]).T.reshape(-1, 1, 2)
+points_v = np.array([X, Y[:, 1]]).T.reshape(-1, 1, 2)
+segments_T = np.concatenate([points_T[:-2], points_T[2:]], axis=1)
+segments_v = np.concatenate([points_v[:-2], points_v[2:]], axis=1)
+
+T_min = Y[:, 3].min()
+T_max = Y[:, 3].max()
+norm_T = plt.Normalize(T_min, T_max)
+
+v_min = Y[:, 1].min()
+v_max = Y[:, 1].max()
+norm_v = plt.Normalize(v_min, v_max)
+
+lc_T = LineCollection(segments_T, cmap='plasma', norm=norm_T)
+lc_v = LineCollection(segments_v, cmap='winter', norm=norm_v)
+
+lc_T.set_array((Y[-2, 3] + Y[2:, 3]))
+lc_v.set_array((Y[-2, 1] + Y[2:, 1]))
+lc_T.set_linewidth(2)
+lc_v.set_linewidth(2)
+lc_T.set_antialiased(True)
+lc_v.set_antialiased(True)
+line_T = ax.add_collection(lc_T)
+line_v = ax.add_collection(lc_v)
+
+plt.ylim(-0.3, 1.3)
+plt.xlim(-3, 53)
+
+plt.show()
+
+"""
+y = np.linspace(1, 5, 20)
+X_x = []
+for y_i in y:
+    X_x.append(np.array(X[:-10000])*(y_i**0.25))
+X_y = [np.array([y_j for x_i in X[:-10000]]) for y_j in y]
+print(X_x, X_y)
+print(len(X_x), len(X_y))
+
+for i, y_i in enumerate(X_y):
+    plt.scatter(X_x[i], y_i, c=Y[:-10000, 3], cmap="plasma")
+
+
+plt.show()
+"""
+
+plt.plot(X, Y[:, 0], '-b', X, Y[:, 1], '-r')
+plt.show()
+
+x = np.arange(0, 5, 0.1)
+y = np.arange(0.1, 5, 0.1)
+Z = np.zeros((len(y), len(x)))
+for i, x_i in enumerate(x):
+    for j, y_j in enumerate(y):
+        if x_i/y_j**(0.25) <= X[-1]:
+            k = math.floor(x_i/y_j**(0.25) / h)
+            Z[j,i] = Y[k, 3]
+        else:
+            Z[j,i] = 0
+plt.contourf(x, y, Z, 50, cmap='plasma')
+
+xx_ = np.arange(0.5, 5, 0.5)
+yy_ = np.arange(0.5, 5, 0.5)
+xx, yy = np.meshgrid(xx_, yy_)
+u = np.zeros((len(yy_), len(xx_)))
+v = np.zeros((len(yy_), len(xx_)))
+for i, x_i in enumerate(xx_):
+    for j, y_j in enumerate(yy_):
+        if x_i/y_j**(0.25) <= X[-1]:
+            k = math.floor(x_i/y_j**(0.25) / h)
+            u[j, i] = 1e-1 * (Y[k, 1] * x_i - 3 * y_j ** 0.5 * Y[k, 0] * 1.56e-2) / y_j**0.5
+            v[j, i] = 1e-1 * 2 * Y[k, 1] * y_j**0.5
+        else:
+            u[j, i] = 0 ; v[j, i] = 0
+plt.quiver(xx, yy, u, v)
+
+
+plt.show()
+
