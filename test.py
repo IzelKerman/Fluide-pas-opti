@@ -150,7 +150,6 @@ def solver(error=1, N_max=50):
     X, Y = rk4(dF, (0, 50), a_new, h)
     plt.plot(X, Y[:, 1], "b", X, Y[:, 3], "r")
     plt.show()
-    plt.plot(X, Y)
     return a_new
 
 """
