@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 #a = solver(error=1e-7)
 #X, Y = rk4(dF, (0, 100), a, h)
 
-nu = 15.6e-5
+nu = 1.56e-5
 bgt = 1e-2
 dt = 0.001
 N = 150
