@@ -88,7 +88,7 @@ def convection(Prandtl, error=1e-7, graph=True):
     if graph:
         X, Y = rk4(dF, (0, 50), a, h)
         plt.plot(X, Y[:, 1], '-b', label="f'")
-        plt.plot(X, Y[:, 3], '-3', label="theta")
+        plt.plot(X, Y[:, 3], '-r', label="theta")
         plt.xlabel("eta")
         plt.legend()
         plt.show()
