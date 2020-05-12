@@ -81,19 +81,21 @@ def solver(error=1, N_max=50):
     print(time.process_time() - start)
     return a_new
 
-def convection(Prandtl, error=1e-7):
-    # TODO: ne pas oublier de faire un petit graphique et de renvoyer les bonnes valeurs ;-)
+def convection(Prandtl, error=1e-7, graph=True):
     global Pr
     Pr = Prandtl
     a = solver(error)
-    return rk4(dF, (0, 50), a, h)
+    if graph:
+        X, Y = rk4(dF, (0, 50), a, h)
+        plt.plot(X, Y[:, 1], '-b', label="f'")
+        plt.plot(X, Y[:, 3], '-3', label="theta")
+        plt.xlabel("eta")
+        plt.legend()
+        plt.show()
+    return a[0], a[1]
 
 if __name__ == "__main__":
-    X, Y = convection(0.3)
-    plt.plot(X, Y[:,1], label="f'")
-    plt.plot(X, Y[:,3], label="theta")
-    plt.legend()
-    plt.show()
+    X, Y = convection(10)
 
 
 
