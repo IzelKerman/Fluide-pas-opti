@@ -1,6 +1,7 @@
 from main import *
 import matplotlib.animation as anim
 import matplotlib.pyplot as plt
+import math
 
 
 #P = [[(i + 1) / 1000, 1] for i in range(200)]
