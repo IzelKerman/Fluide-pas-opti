@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import time
 
-plt.style.use('dark_background')
+# plt.style.use('dark_background')
 # plt.rc('text', usetex=True)
 
 Pr = 1
